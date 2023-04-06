@@ -2,12 +2,10 @@ from flask import Flask, request, jsonify
 import pyrebase
 import math
 from flask_ngrok import run_with_ngrok
-#from flask_cors import CORS
 
 
 api = Flask(__name__)
 run_with_ngrok(api)
-#CORS(api)
 
 firebaseConfig  = {
     "apiKey": "AIzaSyC-lx6ebkWgXLkS3y5hIdL-Jc_1wUEZJL4",
@@ -42,7 +40,7 @@ def agregarCubiculo():
     try:
         # Validates if the cubicle has already been stored
         result = base.child("cubiculo").order_by_child(
-            "correo").equal_to(cubiculo_id).get().val().keys()
+            "cubiculo_id").equal_to(cubiculo_id).get().val().keys()
         if result != []:
                 return jsonify({"message": "Este cubículo ya ha sido registrado"})
         base.child("cubiculo").child(cubiculo_id).set(cubiculo)
