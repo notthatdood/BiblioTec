@@ -1,5 +1,3 @@
-#this script was made using code adapted from: https://www.geeksforgeeks.org/how-to-run-python-flask-app-online-using-ngrok/
-
 from flask import Flask, request, jsonify
 import pyrebase
 from flask_cors import CORS
