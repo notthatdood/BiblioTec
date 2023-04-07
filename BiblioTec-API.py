@@ -1,11 +1,12 @@
+#this script was made using code adapted from: https://www.geeksforgeeks.org/how-to-run-python-flask-app-online-using-ngrok/
+
 from flask import Flask, request, jsonify
 import pyrebase
-import math
-from flask_ngrok import run_with_ngrok
+from flask_cors import CORS
 
 
 api = Flask(__name__)
-run_with_ngrok(api)
+CORS(api)
 
 firebaseConfig  = {
     "apiKey": "AIzaSyC-lx6ebkWgXLkS3y5hIdL-Jc_1wUEZJL4",
@@ -51,12 +52,10 @@ def agregarCubiculo():
 
 @api.route("/")
 def hello():
-    return "Hello Friends! from Pykit.org. Thank you! for reading this article."
+    return "Welcome to Biblio-Tec"
 
-
-api.run()
-
-
+if __name__ == "__main__":
+    api.run(debug=True)
 
 
 
