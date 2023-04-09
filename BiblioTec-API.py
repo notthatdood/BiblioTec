@@ -1,8 +1,10 @@
 # Made using code adapted from: https://www.youtube.com/watch?v=sVwWEoDa_uY&list=PLs3IFJPw3G9Jwaimh5yTKot1kV5zmzupt&index=6
-
+#Made using code from: https://github.com/The-Intrigued-Engineer/python_emails/blob/main/text_email.py
 from flask import Flask, request, jsonify
 import pyrebase
 from flask_cors import CORS
+import smtplib
+import ssl
 
 #############################################DB and API configs############################################
 api = Flask(__name__)
@@ -21,6 +23,55 @@ firebaseConfig = {
 fb = pyrebase.initialize_app(firebaseConfig)
 base = fb.database()
 
+#############################################SMTP configs############################################
+
+
+
+def enviarCorreoATodos(message):
+    print("bbbbbbbbbbbbbbbbbbb")
+    try:
+        estudiantes = base.child("estudiante").get()
+        
+        for estudiante in estudiantes.each():
+            print(estudiante.val())
+            enviarCorreo(estudiante.val()["correo"], message)
+    except Exception as e:
+        print(e)
+
+def enviarCorreo(email_to, message):
+    smtp_port = 587                 # Standard secure SMTP port
+    smtp_server = "smtp.gmail.com"  # Google SMTP Server
+
+    email_from = "bibliotecmail@gmail.com"
+    #email_to = "xxxxxxxxxx@gmail.com"
+
+    pswd = "pubrnylofjmuqmff"
+
+    # Create context
+    simple_email_context = ssl.create_default_context()
+
+    try:
+        # Connect to the server
+        print("Connecting to server...")
+        TIE_server = smtplib.SMTP(smtp_server, smtp_port)
+        TIE_server.starttls(context=simple_email_context)
+        TIE_server.login(email_from, pswd)
+        print("Connected to server :-)")
+        
+        # Send the actual email
+        print()
+        print(f"Sending email to - {email_to}")
+        TIE_server.sendmail(email_from, email_to, message)
+        print(f"Email successfully sent to - {email_to}")
+
+    # If there's an error, print it out
+    except Exception as e:
+        print(e)
+        print("Error al enviar correo a: ", email_to)
+
+    # Close the port
+    finally:
+        TIE_server.quit()
 
 
 #############################################Cubicle CRUD############################################
@@ -116,7 +167,10 @@ def actualizarCubiculo():
                 if (max_personas != ""):
                     base.child("cubiculo").child(cubiculo.key()).update({"max_personas": max_personas})
                 if (estado != ""):
-                    base.child("cubiculo").child(cubiculo.key()).update({"estado": estado})                
+                    base.child("cubiculo").child(cubiculo.key()).update({"estado": estado})
+                message = "Se actualizaron los datos del cubiculo: "
+                message= message + str(nuevo_cubiculo["cubiculo_id"])
+                enviarCorreoATodos(message.encode('utf-8'))                
                 return jsonify({"message": "El cubículo se actualizó exitosamente"})
 
         return jsonify({"message": "El cubículo no existe"})
