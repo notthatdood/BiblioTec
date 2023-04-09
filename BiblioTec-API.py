@@ -1,3 +1,5 @@
+#Made using code adapted from: https://www.youtube.com/watch?v=sVwWEoDa_uY&list=PLs3IFJPw3G9Jwaimh5yTKot1kV5zmzupt&index=6
+
 from flask import Flask, request, jsonify
 import pyrebase
 from flask_cors import CORS
@@ -30,7 +32,7 @@ def agregarCubiculo():
     cubiculo_id = data["cubiculo_id"]
     max_personas = data["max_personas"]
 
-    cubiculo = {
+    nuevo_cubiculo = {
         "cubiculo_id": cubiculo_id,
         "max_personas": max_personas,
         "horario": ""
@@ -38,11 +40,15 @@ def agregarCubiculo():
 
     try:
         # Validates if the cubicle has already been stored
-        result = base.child("cubiculo").order_by_child(
-            "cubiculo_id").equal_to(cubiculo_id).get().val().keys()
-        if result != []:
+        cubiculos = base.child("cubiculo").get()
+
+        for cubiculo in cubiculos.each():
+            print(cubiculo.val()["cubiculo_id"])
+            if (cubiculo.val()["cubiculo_id"] == cubiculo_id):
                 return jsonify({"message": "Este cubículo ya ha sido registrado"})
-        base.child("cubiculo").child(cubiculo_id).set(cubiculo)
+        
+                
+        base.child("cubiculo").push(nuevo_cubiculo)
         return jsonify({"message": "El cubículo se registró exitosamente"})
         
     except:
