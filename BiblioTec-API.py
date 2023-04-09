@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify
 import pyrebase
 from flask_cors import CORS
 
-
+#############################################DB and API configs############################################
 api = Flask(__name__)
 CORS(api)
 
@@ -21,10 +21,14 @@ firebaseConfig = {
 fb = pyrebase.initialize_app(firebaseConfig)
 base = fb.database()
 
+
+
+#############################################Cubicle CRUD############################################
+
+
 # This function gets the information of all cubicles and returns it as a list.
 
-
-@api.route('/consultarCubiculos', methods=["GET"])
+@api.route('/consultarCubiculos', methods=["POST"])
 def consultarCubiculos():
     try:
         cubiculos = base.child("cubiculo").get().val()
@@ -35,7 +39,7 @@ def consultarCubiculos():
         return jsonify({"message": "Hubo un error al consultar los cubículos"})
 
 
-# This function stores a cubicle and it's related information in the DB.
+# This function registers a cubicle and it's related information in the DB.
 # It checks first if a cubicle with the same id existed already
 
 @api.route('/agregarCubiculo', methods=["POST"])
@@ -43,17 +47,19 @@ def agregarCubiculo():
     data = request.get_json()
     cubiculo_id = data["cubiculo_id"]
     max_personas = data["max_personas"]
+    estado = data["estado"]
+    tiempo = data["tiempo"]
 
     nuevo_cubiculo = {
         "cubiculo_id": cubiculo_id,
         "max_personas": max_personas,
-        "horario": ""
+        "estado": estado,
+        "tiempo": tiempo
     }
 
     try:
-        # Validates if the cubicle has already been stored
+        # Validates if the cubicle has already been registered
         cubiculos = base.child("cubiculo").get()
-
         for cubiculo in cubiculos.each():
             print(cubiculo.val()["cubiculo_id"])
             if (cubiculo.val()["cubiculo_id"] == cubiculo_id):
@@ -74,9 +80,7 @@ def eliminarCubiculo():
     cubiculo_id = data["cubiculo_id"]
 
     try:
-        # Validates if the cubicle has already been stored
         cubiculos = base.child("cubiculo").get()
-
         for cubiculo in cubiculos.each():
             if (cubiculo.val()["cubiculo_id"] == cubiculo_id):
                 base.child("cubiculo").child(cubiculo.key()).remove()
@@ -95,20 +99,24 @@ def actualizarCubiculo():
     data = request.get_json()
     cubiculo_id = data["cubiculo_id"]
     max_personas = data["max_personas"]
+    estado = data["estado"]
+    tiempo = data["tiempo"]
 
     nuevo_cubiculo = {
         "cubiculo_id": cubiculo_id,
         "max_personas": max_personas,
-        "horario": ""
+        "estado": estado,
+        "tiempo": tiempo
     }
 
     try:
-        # Validates if the cubicle has already been stored
         cubiculos = base.child("cubiculo").get()
-
         for cubiculo in cubiculos.each():
             if (cubiculo.val()["cubiculo_id"] == cubiculo_id):
-                base.child("cubiculo").child(cubiculo.key()).update({"max_personas": max_personas})
+                if (max_personas != ""):
+                    base.child("cubiculo").child(cubiculo.key()).update({"max_personas": max_personas})
+                if (estado != ""):
+                    base.child("cubiculo").child(cubiculo.key()).update({"estado": estado})                
                 return jsonify({"message": "El cubículo se actualizó exitosamente"})
 
         return jsonify({"message": "El cubículo no existe"})
@@ -118,6 +126,121 @@ def actualizarCubiculo():
 
 
 
+#############################################Student CRUD############################################
+
+
+# This function gets the information of all cubicles and returns it as a list.
+
+@api.route('/consultarEstudiantes', methods=["POST"])
+def consultarEstudiantes():
+    try:
+        estudiantes = base.child("estudiante").get().val()
+        lista_estudiantes = list(estudiantes.values())
+        return jsonify({"message": lista_estudiantes})
+
+    except:
+        return jsonify({"message": "Hubo un error al consultar los estudiantes"})
+
+
+# This function registers a student and it's related information in the DB.
+# It checks first if a student with the same id existed already
+
+@api.route('/agregarEstudiante', methods=["POST"])
+def agregarEstudiante():
+    data = request.get_json()
+    estudiante_id = data["estudiante_id"]
+    nombre = data["nombre"]
+    primer_apellido = data["primer_apellido"]
+    segundo_apellido = data["segundo_apellido"]
+    correo = data["correo"]
+    contrasena = data["contrasena"]
+
+    nuevo_estudiante = {
+        "estudiante_id": estudiante_id,
+        "nombre": nombre,
+        "primer_apellido": primer_apellido,
+        "segundo_apellido": segundo_apellido,
+        "correo": correo,
+        "contrasena": contrasena
+    }
+
+    try:
+        # Validates if the student has already been registered
+        estudiantes = base.child("estudiante").get()
+        for estudiante in estudiantes.each():
+            print(estudiante.val()["estudiante_id"])
+            if (estudiante.val()["estudiante_id"] == estudiante_id):
+                return jsonify({"message": "Este estudiante ya ha sido registrado"})
+
+        base.child("estudiante").push(nuevo_estudiante)
+        return jsonify({"message": "El estudiante se registró exitosamente"})
+
+    except:
+        return jsonify({"message": "Hubo un error al agregar al estudiante"})
+
+
+# This function updates a student's information
+
+@api.route('/actualizarEstudiante', methods=["POST"])
+def actualizarEstudiante():
+    data = request.get_json()
+    estudiante_id = data["estudiante_id"]
+    nombre = data["nombre"]
+    primer_apellido = data["primer_apellido"]
+    segundo_apellido = data["segundo_apellido"]
+    correo = data["correo"]
+    contrasena = data["contrasena"]
+
+    nuevo_estudiante = {
+        "estudiante_id": estudiante_id,
+        "nombre": nombre,
+        "primer_apellido": primer_apellido,
+        "segundo_apellido": segundo_apellido,
+        "correo": correo,
+        "contrasena": contrasena
+    }
+
+    try:
+        estudiantes = base.child("estudiante").get()
+        for estudiante in estudiantes.each():
+            print(estudiante.val()["estudiante_id"])
+            if (estudiante.val()["estudiante_id"] == estudiante_id):
+                if (nombre != ""):
+                    base.child("estudiante").child(estudiante.key()).update({"nombre": nombre})
+                if (primer_apellido != ""):
+                    base.child("estudiante").child(estudiante.key()).update({"primer_apellido": primer_apellido})
+                if (segundo_apellido != ""):
+                    base.child("estudiante").child(estudiante.key()).update({"segundo_apellido": segundo_apellido})
+                if (correo != ""):
+                    base.child("estudiante").child(estudiante.key()).update({"correo": correo})
+                if (contrasena != ""):
+                    base.child("estudiante").child(estudiante.key()).update({"contrasena": contrasena})
+                return jsonify({"message": "El estudiante se editó exitosamente"})
+        
+        return jsonify({"message": "Este estudiante no se ha encontrado"})
+
+    except:
+        return jsonify({"message": "Hubo un error al editar al estudiante"})
+
+
+#This function deletes a student
+
+@api.route('/eliminarEstudiante', methods=["POST"])
+def eliminarEstudiante():
+    data = request.get_json()
+    estudiante_id = data["estudiante_id"]
+
+    try:
+        estudiantes = base.child("estudiante").get()
+        for estudiante in estudiantes.each():
+            if (estudiante.val()["estudiante_id"] == estudiante_id):
+                base.child("estudiante").child(estudiante.key()).remove()
+                return jsonify({"message": "El estudiante se eliminó exitosamente"})
+
+        return jsonify({"message": "El estudiante no existe"})
+
+    except:
+        return jsonify({"message": "Hubo un error al eliminar al estudiante"})
 
 
 @api.route("/")
