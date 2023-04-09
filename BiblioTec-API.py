@@ -99,13 +99,14 @@ def agregarCubiculo():
     cubiculo_id = data["cubiculo_id"]
     max_personas = data["max_personas"]
     estado = data["estado"]
-    tiempo = data["tiempo"]
+    asignado = data["asignado"]
 
     nuevo_cubiculo = {
         "cubiculo_id": cubiculo_id,
         "max_personas": max_personas,
         "estado": estado,
-        "tiempo": tiempo
+        "historial": {},
+        "asignado": asignado
     }
 
     try:
@@ -151,13 +152,13 @@ def actualizarCubiculo():
     cubiculo_id = data["cubiculo_id"]
     max_personas = data["max_personas"]
     estado = data["estado"]
-    tiempo = data["tiempo"]
+    asignado = data["asignado"]
 
     nuevo_cubiculo = {
         "cubiculo_id": cubiculo_id,
         "max_personas": max_personas,
         "estado": estado,
-        "tiempo": tiempo
+        "asignado": asignado
     }
 
     try:
@@ -168,6 +169,8 @@ def actualizarCubiculo():
                     base.child("cubiculo").child(cubiculo.key()).update({"max_personas": max_personas})
                 if (estado != ""):
                     base.child("cubiculo").child(cubiculo.key()).update({"estado": estado})
+                if (asignado != ""):
+                    base.child("cubiculo").child(cubiculo.key()).update({"asignado": asignado})
                 message = "Se actualizaron los datos del cubiculo: "
                 message= message + str(nuevo_cubiculo["cubiculo_id"])
                 enviarCorreoATodos(message.encode('utf-8'))                
