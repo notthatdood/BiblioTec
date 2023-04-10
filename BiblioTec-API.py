@@ -1,12 +1,15 @@
 # Made using code adapted from: https://www.youtube.com/watch?v=sVwWEoDa_uY&list=PLs3IFJPw3G9Jwaimh5yTKot1kV5zmzupt&index=6
-#Made using code from: https://github.com/The-Intrigued-Engineer/python_emails/blob/main/text_email.py
+# Made using code adapted from: https://github.com/The-Intrigued-Engineer/python_emails/blob/main/text_email.py
 from flask import Flask, request, jsonify
 import pyrebase
 from flask_cors import CORS
 import smtplib
 import ssl
 
-#############################################DB and API configs############################################
+
+############################################# DB and API configs############################################
+
+
 api = Flask(__name__)
 CORS(api)
 
@@ -23,27 +26,28 @@ firebaseConfig = {
 fb = pyrebase.initialize_app(firebaseConfig)
 base = fb.database()
 
-#############################################SMTP configs############################################
 
+############################################# SMTP functions############################################
 
 
 def enviarCorreoATodos(message):
     print("bbbbbbbbbbbbbbbbbbb")
     try:
         estudiantes = base.child("estudiante").get()
-        
+
         for estudiante in estudiantes.each():
             print(estudiante.val())
             enviarCorreo(estudiante.val()["correo"], message)
     except Exception as e:
         print(e)
 
+
 def enviarCorreo(email_to, message):
     smtp_port = 587                 # Standard secure SMTP port
     smtp_server = "smtp.gmail.com"  # Google SMTP Server
 
     email_from = "bibliotecmail@gmail.com"
-    #email_to = "xxxxxxxxxx@gmail.com"
+    # email_to = "xxxxxxxxxx@gmail.com"
 
     pswd = "pubrnylofjmuqmff"
 
@@ -57,7 +61,7 @@ def enviarCorreo(email_to, message):
         TIE_server.starttls(context=simple_email_context)
         TIE_server.login(email_from, pswd)
         print("Connected to server :-)")
-        
+
         # Send the actual email
         print()
         print(f"Sending email to - {email_to}")
@@ -74,7 +78,7 @@ def enviarCorreo(email_to, message):
         TIE_server.quit()
 
 
-#############################################Cubicle CRUD############################################
+############################################# Cubicle CRUD############################################
 
 
 # This function gets the information of all cubicles and returns it as a list.
@@ -166,14 +170,16 @@ def actualizarCubiculo():
         for cubiculo in cubiculos.each():
             if (cubiculo.val()["cubiculo_id"] == cubiculo_id):
                 if (max_personas != ""):
-                    base.child("cubiculo").child(cubiculo.key()).update({"max_personas": max_personas})
+                    base.child("cubiculo").child(cubiculo.key()).update(
+                        {"max_personas": max_personas})
                 if (estado != ""):
-                    base.child("cubiculo").child(cubiculo.key()).update({"estado": estado})
+                    base.child("cubiculo").child(
+                        cubiculo.key()).update({"estado": estado})
                 if (asignado != ""):
                     base.child("cubiculo").child(cubiculo.key()).update({"asignado": asignado})
                 message = "Se actualizaron los datos del cubiculo: "
-                message= message + str(nuevo_cubiculo["cubiculo_id"])
-                enviarCorreoATodos(message.encode('utf-8'))                
+                message = message + str(nuevo_cubiculo["cubiculo_id"])
+                enviarCorreoATodos(message.encode('utf-8'))
                 return jsonify({"message": "El cubículo se actualizó exitosamente"})
 
         return jsonify({"message": "El cubículo no existe"})
@@ -182,12 +188,10 @@ def actualizarCubiculo():
         return jsonify({"message": "Hubo un error al actualizar el cubículo"})
 
 
+############################################# Student CRUD############################################
 
-#############################################Student CRUD############################################
 
-
-# This function gets the information of all cubicles and returns it as a list.
-
+# This function gets the information of all students and returns it as a list.
 @api.route('/consultarEstudiantes', methods=["POST"])
 def consultarEstudiantes():
     try:
@@ -201,7 +205,6 @@ def consultarEstudiantes():
 
 # This function registers a student and it's related information in the DB.
 # It checks first if a student with the same id existed already
-
 @api.route('/agregarEstudiante', methods=["POST"])
 def agregarEstudiante():
     data = request.get_json()
@@ -237,7 +240,6 @@ def agregarEstudiante():
 
 
 # This function updates a student's information
-
 @api.route('/actualizarEstudiante', methods=["POST"])
 def actualizarEstudiante():
     data = request.get_json()
@@ -263,25 +265,28 @@ def actualizarEstudiante():
             print(estudiante.val()["estudiante_id"])
             if (estudiante.val()["estudiante_id"] == estudiante_id):
                 if (nombre != ""):
-                    base.child("estudiante").child(estudiante.key()).update({"nombre": nombre})
+                    base.child("estudiante").child(
+                        estudiante.key()).update({"nombre": nombre})
                 if (primer_apellido != ""):
-                    base.child("estudiante").child(estudiante.key()).update({"primer_apellido": primer_apellido})
+                    base.child("estudiante").child(estudiante.key()).update(
+                        {"primer_apellido": primer_apellido})
                 if (segundo_apellido != ""):
-                    base.child("estudiante").child(estudiante.key()).update({"segundo_apellido": segundo_apellido})
+                    base.child("estudiante").child(estudiante.key()).update(
+                        {"segundo_apellido": segundo_apellido})
                 if (correo != ""):
-                    base.child("estudiante").child(estudiante.key()).update({"correo": correo})
+                    base.child("estudiante").child(
+                        estudiante.key()).update({"correo": correo})
                 if (contrasena != ""):
                     base.child("estudiante").child(estudiante.key()).update({"contrasena": contrasena})
                 return jsonify({"message": "El estudiante se editó exitosamente"})
-        
+
         return jsonify({"message": "Este estudiante no se ha encontrado"})
 
     except:
         return jsonify({"message": "Hubo un error al editar al estudiante"})
 
 
-#This function deletes a student
-
+# This function deletes a student
 @api.route('/eliminarEstudiante', methods=["POST"])
 def eliminarEstudiante():
     data = request.get_json()
@@ -298,6 +303,91 @@ def eliminarEstudiante():
 
     except:
         return jsonify({"message": "Hubo un error al eliminar al estudiante"})
+
+
+############################################# Reservations CRUD############################################
+
+
+# This function gets the reservation history of all cubicles
+@api.route('/consultarHistorialCubiculos', methods=["POST"])
+def consultarHistorialCubiculos():
+    try:
+        lista_reservas = []
+        cubiculos = base.child("cubiculo").get()
+        for cubiculo in cubiculos.each():
+            lista_reservas += cubiculo.val()["cubiculo_id"]
+            historial = base.child("cubiculo").child(cubiculo.key()).child("historial").get()
+            for registro in historial.each():
+                print(registro.val()["asignado"])
+                lista_reservas += [registro.val()["asignado"]]
+        return jsonify({"message": lista_reservas})
+
+    except:
+        return jsonify({"message": "Hubo un error al consultar el historial de reservas"})
+
+# This function gets the reservation history of a single cubicles
+@api.route('/consultarHistorialCubiculo', methods=["POST"])
+def consultarHistorialCubiculo():
+    data = request.get_json()
+    cubiculo_id = data["cubiculo_id"]
+
+    try:
+        lista_reservas = []
+        cubiculos =base.child("cubiculo").get()
+        for cubiculo in cubiculos.each():
+            if (cubiculo.val()["cubiculo_id"] == cubiculo_id):
+                historial = base.child("cubiculo").child(cubiculo.key()).child("historial").get()
+                for registro in historial.each():
+                    print(registro.val()["asignado"])
+                    lista_reservas += [registro.val()["asignado"]]
+
+        return jsonify({"message": lista_reservas})
+
+    except:
+        return jsonify({"message": "Hubo un error al consultar el historial de reservas"})
+
+# This function clears the current reservation state of a cubicle
+@api.route('/eliminarAsignacionCubiculo', methods=["POST"])
+def eliminarAsignacion():
+    data = request.get_json()
+    cubiculo_id = data["cubiculo_id"]
+
+    try:
+        cubiculos =base.child("cubiculo").get()
+        for cubiculo in cubiculos.each():
+            if (cubiculo.val()["cubiculo_id"] == cubiculo_id):
+                base.child("cubiculo").child(cubiculo.key()).update({"asignado": ""})
+                base.child("cubiculo").child(cubiculo.key()).update({"estado": "disponible"})
+                return jsonify({"message": "Asignacion eliminada"})
+
+        return jsonify({"message": "No se ha encontrado el cubiculo"})
+
+    except:
+        return jsonify({"message": "Hubo un error al eliminar la asignacion"})
+
+# This function modifies the current reservation state of a cubicle
+@api.route('/actualizarAsignacionCubiculo', methods=["POST"])
+def actualizarAsignacionCubiculo():
+    data = request.get_json()
+    cubiculo_id = data["cubiculo_id"]
+    asignado = data["asignado"]
+    estado = data["estado"]
+
+    try:
+        cubiculos =base.child("cubiculo").get()
+        for cubiculo in cubiculos.each():
+            if (cubiculo.val()["cubiculo_id"] == cubiculo_id):
+                if (asignado != ""):
+                    base.child("cubiculo").child(cubiculo.key()).update({"asignado": asignado})
+                if (estado != ""):
+                    base.child("cubiculo").child(cubiculo.key()).update({"estado": estado})
+                return jsonify({"message": "Asignacion eliminada"})
+
+        return jsonify({"message": "No se ha encontrado el cubiculo"})
+
+    except:
+        return jsonify({"message": "Hubo un error al eliminar la asignacion"})
+
 
 
 @api.route("/")
