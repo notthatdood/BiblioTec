@@ -27,7 +27,7 @@ fb = pyrebase.initialize_app(firebaseConfig)
 base = fb.database()
 
 
-############################################# SMTP functions############################################
+############################################# SMTP ############################################
 
 
 def enviarCorreoATodos(message):
@@ -78,11 +78,10 @@ def enviarCorreo(email_to, message):
         TIE_server.quit()
 
 
-############################################# Cubicle CRUD############################################
+############################################# Cubicle ############################################
 
 
 # This function gets the information of all cubicles and returns it as a list.
-
 @api.route('/consultarCubiculos', methods=["POST"])
 def consultarCubiculos():
     try:
@@ -93,10 +92,45 @@ def consultarCubiculos():
     except:
         return jsonify({"message": "Hubo un error al consultar los cubículos"})
 
+# This function gets the information of cubicles matching the desired state.
+@api.route('/filtrarCubiculosDisponibilidad', methods=["POST"])
+def filtrarCubiculosDisponibilidad():
+    data = request.get_json()
+    estado = data["estado"]
+
+    try:
+        lista_cubiculos=[]
+        cubiculos = base.child("cubiculo").get()
+        for cubiculo in cubiculos.each():
+            if (cubiculo.val()["estado"] == estado):
+                lista_cubiculos += cubiculo.val()
+
+        return jsonify({"message": lista_cubiculos})
+
+    except:
+        return jsonify({"message": "Hubo un error al buscar los cubiculos"})
+    
+# This function gets the information of cubicles matching the desired capacity.
+@api.route('/filtrarCubiculosCapacidad', methods=["POST"])
+def filtrarCubiculosCapacidad():
+    data = request.get_json()
+    max_personas = data["max_personas"]
+
+    try:
+        lista_cubiculos=[]
+        cubiculos = base.child("cubiculo").get()
+        for cubiculo in cubiculos.each():
+            if (cubiculo.val()["max_personas"] == max_personas):
+                lista_cubiculos += cubiculo.val()
+
+        return jsonify({"message": lista_cubiculos})
+
+    except:
+        return jsonify({"message": "Hubo un error al buscar los cubiculos"})
+
 
 # This function registers a cubicle and it's related information in the DB.
 # It checks first if a cubicle with the same id existed already
-
 @api.route('/agregarCubiculo', methods=["POST"])
 def agregarCubiculo():
     data = request.get_json()
@@ -129,7 +163,6 @@ def agregarCubiculo():
 
 
 # This function deletes a cubicle from the db
-
 @api.route('/eliminarCubiculo', methods=["POST"])
 def eliminarCubiculo():
     data = request.get_json()
@@ -149,7 +182,6 @@ def eliminarCubiculo():
 
 
 # This function updates a cubicle in the DB.
-
 @api.route('/actualizarCubiculo', methods=["POST"])
 def actualizarCubiculo():
     data = request.get_json()
@@ -188,7 +220,7 @@ def actualizarCubiculo():
         return jsonify({"message": "Hubo un error al actualizar el cubículo"})
 
 
-############################################# Student CRUD############################################
+############################################# Student ############################################
 
 
 # This function gets the information of all students and returns it as a list.
@@ -305,7 +337,7 @@ def eliminarEstudiante():
         return jsonify({"message": "Hubo un error al eliminar al estudiante"})
 
 
-############################################# Reservations CRUD############################################
+############################################# Reservations ############################################
 
 
 # This function gets the reservation history of all cubicles
@@ -387,6 +419,8 @@ def actualizarAsignacionCubiculo():
 
     except:
         return jsonify({"message": "Hubo un error al eliminar la asignacion"})
+
+
 
 
 
