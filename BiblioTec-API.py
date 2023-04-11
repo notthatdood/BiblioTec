@@ -219,6 +219,37 @@ def actualizarCubiculo():
     except:
         return jsonify({"message": "Hubo un error al actualizar el cubículo"})
 
+#This function makes a reservation for the specified cubicle
+@api.route('/reservarCubiculo', methods=["POST"])
+def reservarCubiculo():
+    data = request.get_json()
+    cubiculo_id = data["cubiculo_id"]
+    usuario = data["usuario"]
+
+    reserva_cubiculo = {
+        "cubiculo_id": cubiculo_id,
+        "estado": "ocupado",
+        "asignado": usuario
+    }
+
+    try:
+        cubiculos = base.child("cubiculo").get()
+        for cubiculo in cubiculos.each():
+            if (cubiculo.val()["cubiculo_id"] == cubiculo_id):
+                if (cubiculo.val()["estado"] == "ocupado"):
+                    return jsonify({"message": "El cubículo ya estaba ocupado"})
+                message = "Se actualizaron los datos del cubiculo: "
+                message = message + str(reserva_cubiculo["cubiculo_id"])
+                enviarCorreo(usuario, message.encode('utf-8'))
+                return jsonify({"message": "El cubículo se reservo exitosamente"})
+
+        return jsonify({"message": "El cubículo no existe"})
+
+    except:
+        return jsonify({"message": "Error durante la reservación"})
+
+
+
 
 ############################################# Student ############################################
 
