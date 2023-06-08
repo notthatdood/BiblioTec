@@ -87,10 +87,10 @@ def consultarCubiculos():
     try:
         cubiculos = base.child("cubiculo").get().val()
         lista_cubiculos = list(cubiculos.values())
-        return jsonify({"message": lista_cubiculos})
+        return jsonify(lista_cubiculos)
 
     except:
-        return jsonify({"message": "Hubo un error al consultar los cubículos"})
+        return jsonify({"Hubo un error al consultar los cubículos"})
 
 # This function gets the information of cubicles matching the desired state.
 @api.route('/filtrarCubiculosDisponibilidad', methods=["POST"])
@@ -105,10 +105,10 @@ def filtrarCubiculosDisponibilidad():
             if (cubiculo.val()["estado"] == estado):
                 lista_cubiculos += cubiculo.val()
 
-        return jsonify({"message": lista_cubiculos})
+        return jsonify(lista_cubiculos)
 
     except:
-        return jsonify({"message": "Hubo un error al buscar los cubiculos"})
+        return "Hubo un error al buscar los cubiculos"
     
 # This function gets the information of cubicles matching the desired capacity.
 @api.route('/filtrarCubiculosCapacidad', methods=["POST"])
@@ -136,15 +136,16 @@ def agregarCubiculo():
     data = request.get_json()
     cubiculo_id = data["cubiculo_id"]
     max_personas = data["max_personas"]
-    estado = data["estado"]
-    asignado = data["asignado"]
+    esEspecial = data["esEspecial"]
 
     nuevo_cubiculo = {
         "cubiculo_id": cubiculo_id,
         "max_personas": max_personas,
-        "estado": estado,
+        "estado": "libre",
         "historial": {},
-        "asignado": asignado
+        "asignado": " ",
+        "tiempo": "0",
+        "esEspecial": esEspecial
     }
 
     try:
@@ -189,12 +190,15 @@ def actualizarCubiculo():
     max_personas = data["max_personas"]
     estado = data["estado"]
     asignado = data["asignado"]
+    esEspecial = data["esEspecial"]
+    tiempo = data["tiempo"]
 
     nuevo_cubiculo = {
         "cubiculo_id": cubiculo_id,
         "max_personas": max_personas,
         "estado": estado,
-        "asignado": asignado
+        "asignado": asignado,
+        "tiempo": tiempo
     }
 
     try:
@@ -209,6 +213,9 @@ def actualizarCubiculo():
                         cubiculo.key()).update({"estado": estado})
                 if (asignado != ""):
                     base.child("cubiculo").child(cubiculo.key()).update({"asignado": asignado})
+                if (tiempo != ""):
+                    base.child("cubiculo").child(cubiculo.key()).update({"asignado": asignado})
+                
                 message = "Se actualizaron los datos del cubiculo: "
                 message = message + str(nuevo_cubiculo["cubiculo_id"])
                 enviarCorreoATodos(message.encode('utf-8'))
@@ -224,12 +231,14 @@ def actualizarCubiculo():
 def reservarCubiculo():
     data = request.get_json()
     cubiculo_id = data["cubiculo_id"]
-    usuario = data["usuario"]
+    asignado = data["asignado"]
+    tiempo = data["tiempo"]
 
     reserva_cubiculo = {
         "cubiculo_id": cubiculo_id,
         "estado": "ocupado",
-        "asignado": usuario
+        "asignado": asignado,
+        "tiempo": tiempo
     }
 
     try:
@@ -237,16 +246,22 @@ def reservarCubiculo():
         for cubiculo in cubiculos.each():
             if (cubiculo.val()["cubiculo_id"] == cubiculo_id):
                 if (cubiculo.val()["estado"] == "ocupado"):
-                    return jsonify({"message": "El cubículo ya estaba ocupado"})
-                message = "Se actualizaron los datos del cubiculo: "
-                message = message + str(reserva_cubiculo["cubiculo_id"])
-                enviarCorreo(usuario, message.encode('utf-8'))
-                return jsonify({"message": "El cubículo se reservo exitosamente"})
+                    return "El cubiculo "+cubiculo.val()["estado"] +cubiculo.val()["cubiculo_id"]+ "ya estaba ocupado"
+                if (asignado != ""):
+                    base.child("cubiculo").child(cubiculo.key()).update({"asignado": asignado})
+                    base.child("cubiculo").child(cubiculo.key()).update({"estado": "ocupado"})
+                    base.child("cubiculo").child(cubiculo.key()).update({"tiempo": tiempo})
+                    base.child("cubiculo").child(cubiculo.key()).child("historial").push({"asignado": asignado})
 
-        return jsonify({"message": "El cubículo no existe"})
+                message = "Se reservó el cubiculo: "
+                message = message + str(reserva_cubiculo["cubiculo_id"])
+                enviarCorreo(asignado, message.encode('utf-8'))
+                return "El cubiculo se reservo exitosamente"
+
+        return "El cubiculo no existe"
 
     except:
-        return jsonify({"message": "Error durante la reservación"})
+        return "Error durante la reservación"
 
 
 
@@ -260,7 +275,8 @@ def consultarEstudiantes():
     try:
         estudiantes = base.child("estudiante").get().val()
         lista_estudiantes = list(estudiantes.values())
-        return jsonify({"message": lista_estudiantes})
+        print(lista_estudiantes)
+        return jsonify(lista_estudiantes)
 
     except:
         return jsonify({"message": "Hubo un error al consultar los estudiantes"})
@@ -293,13 +309,13 @@ def agregarEstudiante():
         for estudiante in estudiantes.each():
             print(estudiante.val()["estudiante_id"])
             if (estudiante.val()["estudiante_id"] == estudiante_id):
-                return jsonify({"message": "Este estudiante ya ha sido registrado"})
+                return jsonify({"Este estudiante ya ha sido registrado"})
 
         base.child("estudiante").push(nuevo_estudiante)
-        return jsonify({"message": "El estudiante se registró exitosamente"})
+        return jsonify({"El estudiante se registro exitosamente"})
 
     except:
-        return jsonify({"message": "Hubo un error al agregar al estudiante"})
+        return jsonify({"Hubo un error al agregar al estudiante"})
 
 
 # This function updates a student's information
@@ -360,7 +376,7 @@ def eliminarEstudiante():
         for estudiante in estudiantes.each():
             if (estudiante.val()["estudiante_id"] == estudiante_id):
                 base.child("estudiante").child(estudiante.key()).remove()
-                return jsonify({"message": "El estudiante se eliminó exitosamente"})
+                return jsonify({"message": "El estudiante se elimino exitosamente"})
 
         return jsonify({"message": "El estudiante no existe"})
 
@@ -374,16 +390,23 @@ def eliminarEstudiante():
 # This function gets the reservation history of all cubicles
 @api.route('/consultarHistorialCubiculos', methods=["POST"])
 def consultarHistorialCubiculos():
+    asignacion = {
+        "asignado": "",
+        "cubiculo_id": ""
+    }
     try:
         lista_reservas = []
         cubiculos = base.child("cubiculo").get()
         for cubiculo in cubiculos.each():
-            lista_reservas += cubiculo.val()["cubiculo_id"]
+            #lista_reservas += cubiculo.val()["cubiculo_id"]
             historial = base.child("cubiculo").child(cubiculo.key()).child("historial").get()
             for registro in historial.each():
                 print(registro.val()["asignado"])
-                lista_reservas += [registro.val()["asignado"]]
-        return jsonify({"message": lista_reservas})
+                asignacion["asignado"] = registro.val()["asignado"]
+                asignacion["cubiculo_id"] = cubiculo.val()["cubiculo_id"]
+                #lista_reservas += [registro.val()["asignado"]]
+                lista_reservas += [asignacion.copy()]
+        return jsonify(lista_reservas)
 
     except:
         return jsonify({"message": "Hubo un error al consultar el historial de reservas"})
@@ -404,7 +427,7 @@ def consultarHistorialCubiculo():
                     print(registro.val()["asignado"])
                     lista_reservas += [registro.val()["asignado"]]
 
-        return jsonify({"message": lista_reservas})
+        return jsonify(lista_reservas)
 
     except:
         return jsonify({"message": "Hubo un error al consultar el historial de reservas"})
