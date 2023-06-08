@@ -1,12 +1,13 @@
 # Made using code adapted from: https://www.youtube.com/watch?v=sVwWEoDa_uY&list=PLs3IFJPw3G9Jwaimh5yTKot1kV5zmzupt&index=6
 # Made using code adapted from: https://github.com/The-Intrigued-Engineer/python_emails/blob/main/text_email.py
+# Made using code adapted from: https://www.codeitbro.com/send-email-using-python/
+
 from flask import Flask, request, jsonify
 import pyrebase
 from flask_cors import CORS
 import smtplib
 import ssl
-
-
+import qrcode
 ############################################# DB and API configs############################################
 
 
@@ -43,6 +44,10 @@ def enviarCorreoATodos(message):
 
 
 def enviarCorreo(email_to, message):
+    img = qrcode.make('Some data here')
+    type(img)  # qrcode.image.pil.PilImage
+    img.save("qrcode.png")
+
     smtp_port = 587                 # Standard secure SMTP port
     smtp_server = "smtp.gmail.com"  # Google SMTP Server
 
@@ -214,7 +219,7 @@ def actualizarCubiculo():
                 if (asignado != ""):
                     base.child("cubiculo").child(cubiculo.key()).update({"asignado": asignado})
                 if (tiempo != ""):
-                    base.child("cubiculo").child(cubiculo.key()).update({"asignado": asignado})
+                    base.child("cubiculo").child(cubiculo.key()).update({"tiempo": tiempo})
                 
                 message = "Se actualizaron los datos del cubiculo: "
                 message = message + str(nuevo_cubiculo["cubiculo_id"])
@@ -255,6 +260,7 @@ def reservarCubiculo():
 
                 message = "Se reservó el cubiculo: "
                 message = message + str(reserva_cubiculo["cubiculo_id"])
+                print("oli")
                 enviarCorreo(asignado, message.encode('utf-8'))
                 return "El cubiculo se reservo exitosamente"
 
@@ -276,6 +282,10 @@ def consultarEstudiantes():
         estudiantes = base.child("estudiante").get().val()
         lista_estudiantes = list(estudiantes.values())
         print(lista_estudiantes)
+        admins = base.child("administrador").get().val()
+        lista_admins = list(admins.values())
+        print(lista_admins)
+        lista_estudiantes += lista_admins
         return jsonify(lista_estudiantes)
 
     except:
@@ -309,13 +319,13 @@ def agregarEstudiante():
         for estudiante in estudiantes.each():
             print(estudiante.val()["estudiante_id"])
             if (estudiante.val()["estudiante_id"] == estudiante_id):
-                return jsonify({"Este estudiante ya ha sido registrado"})
+                return jsonify({"message": "Este estudiante ya ha sido registrado"})
 
         base.child("estudiante").push(nuevo_estudiante)
-        return jsonify({"El estudiante se registro exitosamente"})
+        return jsonify({"message": "El estudiante se registro exitosamente"})
 
     except:
-        return jsonify({"Hubo un error al agregar al estudiante"})
+        return jsonify({"message": "Hubo un error al agregar al estudiante"})
 
 
 # This function updates a student's information
@@ -473,10 +483,6 @@ def actualizarAsignacionCubiculo():
 
     except:
         return jsonify({"message": "Hubo un error al eliminar la asignacion"})
-
-
-
-
 
 @api.route("/")
 def hello():
